@@ -1,0 +1,20 @@
+name: "One layer MLP"
+model:
+  _target_: models.MLPModel
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.1
+criterion:
+  _target_: torch.nn.MSELoss
+dataset:
+  _target_: dataset.MoleculeDataset
+  filepath: "data.csv"
+batch_size: 128
+num_epochs: 50
+save_path: "1l_mlp.pt"
+early_stop: 10
+split_ratios: [0.6, 0.3, 0.1]
+random_state: 42
+collate_fn:
+  _target_: collate_fn.hetero_collate_fn
+image_path: "1l_mlp.png"

@@ -1,0 +1,28 @@
+name: "Homo GNN with center transform and GATConv"
+model:
+  _target_: models.HomoGNN
+  conv_type:
+    _target_: torch_geometric.nn.GATConv
+    _partial_: True
+  hidden_channels: 16
+  out_channels: 8
+optimizer:
+  _target_: torch.optim.Adam
+criterion:
+  _target_: torch.nn.MSELoss
+dataset:
+  _target_: dataset.MoleculeDataset
+  filepath: "data.csv"
+  train_transform:
+    _target_: transforms.Center
+  eval_transform:
+    _target_: transforms.Center
+batch_size: 128
+num_epochs: 30
+save_path: "homo_gnn_center_gat.pt"
+early_stop: 10
+split_ratios: [0.6, 0.3, 0.1]
+random_state: 42
+collate_fn:
+  _target_: collate_fn.homo_collate_fn
+image_path: "homo_gnn_center_gat.png"

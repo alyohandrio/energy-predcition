@@ -1,0 +1,10 @@
+class Compose:
+    def __init__(self, transforms=[]):
+        self.transforms = transforms
+
+    def __call__(self, x):
+        t = x
+        for transform in self.transforms:
+            t = transform(t)
+        return t
+
