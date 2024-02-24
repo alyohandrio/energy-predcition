@@ -21,7 +21,7 @@ dataset:
   eval_transform:
     _target_: transforms.Center
 batch_size: 128
-num_epochs: 30
+num_epochs: 5
 save_path: "homo_gnn_center_roation_gat.pt"
 early_stop: 10
 split_ratios: [0.6, 0.3, 0.1]

@@ -1,5 +1,6 @@
 import torch.nn.functional as F
 from torch import Tensor
+import torch.nn as nn
 
 from torch_geometric.nn.aggr import Aggregation, MultiAggregation
 from torch_geometric.nn.conv import MessagePassing
@@ -73,3 +74,12 @@ class DiffSAGEConv(MessagePassing):
         if self.transform is not None:
             return self.transform(x_j - x_i)
         return x_j - x_i
+
+
+class DiffSAGEWrapper(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.sage = DiffSAGEConv(*args, **kwargs)
+
+    def forward(self, x, edge_index, size=None):
+        return self.sage(x, edge_index, size)

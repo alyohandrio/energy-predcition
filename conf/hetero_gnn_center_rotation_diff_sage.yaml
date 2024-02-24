@@ -1,4 +1,4 @@
-name: "Hetero GNN with center and rotation transform and GATConv"
+name: "Hetero GNN with center and rotation transform, DiffSAGE encoder and GATConv based model"
 model:
   _target_: models.HeteroGNN
   gnn_type:
@@ -12,6 +12,16 @@ model:
       heads: 1
       add_self_loops: False
     hidden_channels: 16
+  encoder_type:
+    _target_: utils.DiffSAGEWrapper
+    _partial_: True
+  encoder_args:
+    in_channels: -1
+    transform:
+      _target_: transforms.Compose
+      transforms:
+        - _target_: transforms.AddNorm
+        - _target_: transforms.NormDirection
   out_channels: 8
   head_dim: 4
 optimizer:
@@ -30,10 +40,10 @@ dataset:
     _target_: transforms.Center
 batch_size: 128
 num_epochs: 5
-save_path: "hetero_gnn_center_roation_gat.pt"
+save_path: "hetero_gnn_center_roation_diff_sage_gat.pt"
 early_stop: 10
 split_ratios: [0.6, 0.3, 0.1]
 random_state: 42
 collate_fn:
   _target_: collate_fn.hetero_collate_fn
-image_path: "hetero_gnn_center_rotation_gat.png"
+image_path: "hetero_gnn_center_rotation_diff_sage_gat.png"

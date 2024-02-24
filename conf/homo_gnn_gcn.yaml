@@ -2,7 +2,7 @@ name: "Homo GNN with GCNConv"
 model:
   _target_: models.HomoGNN
   conv_type:
-    _target_: torch_geometric.nn.GATConv
+    _target_: torch_geometric.nn.GCNConv
     _partial_: True
   hidden_channels: 16
   out_channels: 8
@@ -14,7 +14,7 @@ dataset:
   _target_: dataset.MoleculeDataset
   filepath: "data.csv"
 batch_size: 128
-num_epochs: 30
+num_epochs: 5
 save_path: "homo_gnn_gcn.pt"
 early_stop: 10
 split_ratios: [0.6, 0.3, 0.1]
