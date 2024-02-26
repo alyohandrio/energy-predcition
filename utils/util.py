@@ -29,14 +29,12 @@ class SubsetWithTransform(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.indices)
 
-
 def create_edges(lhs, rhs):
-    acc_sum = list(accumulate([0] + lhs))
-    starts = [x for i in range(len(lhs)) for xx in range(acc_sum[i], acc_sum[i + 1]) for x in [xx] * rhs[i]]
-    acc_sum = list(accumulate([0] + rhs))
-    ends = [x for i in range(len(lhs)) for x in list(range(acc_sum[i], acc_sum[i + 1])) * lhs[i]]
-    return torch.tensor([starts, ends])
-
+    sizes = lhs * rhs
+    a = torch.arange(lhs.sum()).repeat_interleave(rhs.repeat_interleave(lhs))
+    tmp = torch.arange(sizes.sum()) - torch.cat([torch.zeros(1).int(), sizes])[:-1].cumsum(0).repeat_interleave(sizes)
+    b = tmp % rhs.repeat_interleave(sizes) + torch.cat([torch.zeros(1).int(), rhs])[:-1].cumsum(0).repeat_interleave(sizes)
+    return torch.vstack([a, b])
 
 def random_split(dataset, lengths, random_state=None):
     generator = torch.Generator().manual_seed(random_state)
