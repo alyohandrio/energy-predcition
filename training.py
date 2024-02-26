@@ -90,12 +90,13 @@ def train_and_eval(cfg):
     test_ds.eval()
     val_ds.eval()
     batch_size = cfg.batch_size
+    num_workers = cfg.num_workers if "num_workers" in cfg else 1
     collate_fn = instantiate(cfg.collate_fn, _partial_=True)
-    train_loader = DataLoader(train_ds, batch_size=batch_size, collate_fn=collate_fn)
-    test_loader = DataLoader(test_ds, batch_size=batch_size, collate_fn=collate_fn)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, collate_fn=collate_fn)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=num_workers)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=num_workers)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=num_workers)
     
-    model = instantiate(cfg.model)
+    model = instantiate(cfg.model).to(device)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
     criterion = instantiate(cfg.criterion)
     
