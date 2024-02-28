@@ -3,6 +3,7 @@ from hydra.utils import instantiate
 from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader
+from torch_geometric.data import Data, HeteroData
 from dataset import MoleculeDataset
 from utils import random_split
 import matplotlib
@@ -17,7 +18,7 @@ def train_epoch(model, optimizer, loader, criterion):
     losses = []
     for x in loader:
         for key in x:
-            if isinstance(x[key], torch.Tensor):
+            if isinstance(x[key], torch.Tensor) or isinstance(x[key], Data) or isinstance(x[key], HeteroData):
                 x[key] = x[key].to(device)
 
         optimizer.zero_grad()
@@ -35,7 +36,7 @@ def val_epoch(model, loader, criterion):
     with torch.no_grad():
         for x in loader:
             for key in x:
-                if isinstance(x[key], torch.Tensor):
+                if isinstance(x[key], torch.Tensor) or isinstance(x[key], Data) or isinstance(x[key], HeteroData):
                     x[key] = x[key].to(device)
 
             out = model(**x)
