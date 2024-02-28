@@ -1,6 +1,5 @@
 import hydra
 from hydra.utils import instantiate
-# from tqdm.notebook import tqdm
 from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader
@@ -20,11 +19,7 @@ def train_epoch(model, optimizer, loader, criterion):
         for key in x:
             if isinstance(x[key], torch.Tensor):
                 x[key] = x[key].to(device)
-        # x['data'] = x['data'].to(device)
-        # x['C_group'] = x['C_group'].to(device)
-        # x['H_group'] = x['H_group'].to(device)
-        # x['U_0'] = x['U_0'].to(device)
-        
+
         optimizer.zero_grad()
         out = model(**x)
         loss = criterion(out, x['U_0'])
@@ -42,17 +37,13 @@ def val_epoch(model, loader, criterion):
             for key in x:
                 if isinstance(x[key], torch.Tensor):
                     x[key] = x[key].to(device)
-            # x['data'] = x['data'].to(device)
-            # x['C_group'] = x['C_group'].to(device)
-            # x['H_group'] = x['H_group'].to(device)
-            # x['U_0'] = x['U_0'].to(device)
 
             out = model(**x)
             loss = criterion(out, x['U_0'])
             sum_losses += loss.item() * x['num']
     return [sum_losses / len(loader.dataset)]
 
-def train(model, optimizer, train_loader, val_loader, criterion, num_epochs, save_path, early_stop=None):
+def train(model, optimizer, train_loader, val_loader, criterion, num_epochs, save_path, lr_scheduler=None, early_stop=None):
     train_losses, val_losses = [], []
     best_loss = None
     for _ in tqdm(range(num_epochs)):
@@ -67,10 +58,14 @@ def train(model, optimizer, train_loader, val_loader, criterion, num_epochs, sav
                 "train_losses": train_losses,
                 "val_losses": val_losses
             }
+            if lr_scheduler is not None:
+                state["lr_scheduler state_dict"] = lr_scheduler.state_dict()
             torch.save(state, save_path)
         if early_stop is not None:
             if len(val_losses) >= early_stop + 1 and val_losses[-early_stop - 1] <= val_losses[-1]:
                 break
+        if lr_scheduler is not None:
+            lr_scheduler.step()
     return train_losses, val_losses
 
 @hydra.main(version_base=None, config_path="conf", config_name="homo_gnn")
@@ -83,7 +78,8 @@ def train_and_eval(cfg):
     torch.manual_seed(random_state)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    # np.random.seed(SEED)
+    # np.random.seed(random_state)
+    # random.seed(random_state)
 
     train_ds, test_ds, val_ds = random_split(ds, cfg.split_ratios, random_state=random_state)
     train_ds.train()
@@ -98,12 +94,13 @@ def train_and_eval(cfg):
     
     model = instantiate(cfg.model).to(device)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
+    lr_scheduler = instantiate(cfg.lr_scheduler, optimizer=optimizer) if "lr_scheduler" in cfg else None
     criterion = instantiate(cfg.criterion)
     
     early_stop = cfg.early_stop if "early_stop" in cfg else None
     num_epochs = cfg.num_epochs
     save_path = cfg.save_path
-    train_losses, val_losses = train(model, optimizer, train_loader, val_loader, criterion, num_epochs, save_path, early_stop)
+    train_losses, val_losses = train(model, optimizer, train_loader, val_loader, criterion, num_epochs, save_path, lr_scheduler, early_stop)
     model.load_state_dict(torch.load(save_path)["model state_dict"])
     print(f"{cfg.name} loss: ", end='')
     print(val_epoch(model, test_loader, criterion)[0])
@@ -113,4 +110,3 @@ def train_and_eval(cfg):
     plt.yscale('log')
     image_path = cfg.image_path
     plt.savefig(image_path, bbox_inches='tight')
-    # plt.show()
